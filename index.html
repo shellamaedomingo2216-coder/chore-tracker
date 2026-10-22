@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chore Tracker</title>
+
+  <style>
+    /* ---------- Step 2: the look ---------- */
+    body {
+      font-family: Arial, sans-serif;
+      background: #F6F4F8;
+      color: #3a3a3f;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h3 {
+      margin: 8px 0 4px;
+    }
+
+    button {
+      background: #C2416F;
+      color: white;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* ---------- Step 3: done state ---------- */
+    .card.done h3 {
+      text-decoration: line-through;
+      color: #6f6f78;
+    }
+
+    .card.done {
+      opacity: 0.7;
+    }
+
+    /* ---------- Step 4: the form ---------- */
+    form {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    input, select {
+      padding: 10px;
+      border: 1px solid #d9d6de;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    /* ---------- Step 5: swap and banner ---------- */
+    .ghost {
+      background: white;
+      color: #C2416F;
+      border: 1.5px solid #C2416F;
+    }
+
+    .card.pending {
+      opacity: 0.8;
+      border: 2px dashed #C2416F;
+    }
+
+    .banner {
+      background: #fffaf8;
+      border: 1.5px solid #C2416F;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .banner .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Chores</h1>
+  <p>Fair share for everyone at home.</p>
+
+  <!-- Step 5: request banner -->
+  <div id="request" class="banner">
+    <b>Hanna asked you to take</b> “Take out the trash”
+    <div class="row">
+      <button id="acceptBtn">Accept</button>
+      <button id="declineBtn" class="ghost">Decline</button>
+    </div>
+  </div>
+
+  <!-- Step 4: add chore form -->
+  <form id="addForm">
+    <input id="choreName" placeholder="What needs doing?">
+    <select id="assignTo">
+      <option>You</option>
+      <option>Hanna</option>
+    </select>
+    <select id="repeat">
+      <option>Daily</option>
+      <option>Weekly</option>
+      <option>Monthly</option>
+      <option>Once</option>
+    </select>
+    <button type="submit">Add chore</button>
+  </form>
+
+  <!-- The chore cards (each card has its own closing div) -->
+  <div id="list">
+    <div class="card">
+      <button class="doneBtn">Done</button>
+      <button class="swapBtn ghost">Swap</button>
+      <h3>Do the laundry</h3>
+      <p>You · Weekly</p>
+    </div>
+
+    <div class="card">
+      <button class="doneBtn">Done</button>
+      <button class="swapBtn ghost">Swap</button>
+      <h3>Cook dinner</h3>
+      <p>Hanna · Daily</p>
+    </div>
+
+    <div class="card">
+      <button class="doneBtn">Done</button>
+      <button class="swapBtn ghost">Swap</button>
+      <h3>Buy groceries</h3>
+      <p>Hanna · Weekly</p>
+    </div>
+  </div>
+
+  <script>
+    var list = document.getElementById("list");
+    var form = document.getElementById("addForm");
+    var request = document.getElementById("request");
+
+    // Builds one new chore card and puts it at the top of the list
+    function addChore(name, who, repeat) {
+      var card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        "<button class='doneBtn'>Done</button> " +
+        "<button class='swapBtn ghost'>Swap</button><h3></h3><p></p>";
+      card.querySelector("h3").textContent = name;
+      card.querySelector("p").textContent = who + " · " + repeat;
+      list.prepend(card);
+    }
+
+    // One click listener for the whole list (works for new cards too)
+    list.addEventListener("click", function (e) {
+      var btn = e.target;
+      if (btn.tagName !== "BUTTON") return;
+      var card = btn.parentElement;
+
+      // Done / Undo
+      if (btn.classList.contains("doneBtn")) {
+        card.classList.toggle("done");
+        btn.textContent = card.classList.contains("done") ? "Undo" : "Done";
+      }
+
+      // Swap / Cancel
+      if (btn.classList.contains("swapBtn")) {
+        var info = card.querySelector("p");
+        if (card.classList.contains("pending")) {
+          card.classList.remove("pending");
+          info.textContent = info.dataset.original;
+          btn.textContent = "Swap";
+        } else {
+          card.classList.add("pending");
+          info.dataset.original = info.textContent;
+          info.textContent = "Waiting for Hanna to accept";
+          btn.textContent = "Cancel";
+        }
+      }
+    });
+
+    // Add chore form
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = document.getElementById("choreName").value.trim();
+      if (name === "") return;
+      addChore(
+        name,
+        document.getElementById("assignTo").value,
+        document.getElementById("repeat").value
+      );
+      form.reset();
+    });
+
+    // Accept / Decline the request banner
+    document.getElementById("acceptBtn").addEventListener("click", function () {
+      addChore("Take out the trash", "You", "Weekly");
+      request.hidden = true;
+    });
+
+    document.getElementById("declineBtn").addEventListener("click", function () {
+      request.hidden = true;
+    });
+  </script>
+</body>
+</html>
+    
